@@ -145,6 +145,7 @@ export default class Canvas extends React.Component {
                 <button id="clear">clear</button>
                 <button id="redo">redo</button>
                 <button id="undo">undo</button>
+                <select>テスト</select>
             </>
         )
     }
