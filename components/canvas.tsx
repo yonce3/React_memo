@@ -100,7 +100,6 @@ export default class Canvas extends React.Component {
         this.undoDataStack.unshift(context.getImageData(0, 0, this.canvas.width, this.canvas.height) as never);
     }
 
-    // どういう風にオブジェクトを持つか?
     // 参考: https://qiita.com/ampersand/items/69c8d632ed9f60358418
     redo(context: CanvasRenderingContext2D) {
         //座標の情報しか持ってなくない？
