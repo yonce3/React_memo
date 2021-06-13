@@ -8,9 +8,6 @@ export default function Memos() {
             <AppHead headMessage="Memos" />
             <AppHeader />
             <Canvas />
-            <div>
-            <h1>hoge</h1>
-            </div>
         </>
     )
 }
