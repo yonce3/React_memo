@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { MouseEvent, useEffect, useState, useRef } from "react";
 import styled from 'styled-components';
 import NormalButton from "./button";
 
-export default function Canvas() {
-
+export default function Canvas(this: any) {
     const [isDrawing, setDrawing] = useState(false);
     const [isClearEnabled, setClearEnabled] = useState(false);
     const [isClearing, setClearing] = useState(false);
@@ -16,117 +15,64 @@ export default function Canvas() {
     let undoDataStack: Array<ImageData> = [];
     let redoDataStack: Array<ImageData> = [];
     let canvas: HTMLCanvasElement | null= null;
-    let context: HTML | null = null;
-    // private isDrawing = false;
-    // private isClearEnabled = false;
-    // private isClearing = false;
-    // private x = 0;
-    // private y = 0;
-    //private canvas!: HTMLCanvasElement;
+    let context: CanvasRenderingContext2D | null = null;
 
-    // []を第二引数にすることで、初回のみの実行になる
-    useEffect(() => {
-        canvas = document.getElementById('canvas') as HTMLCanvasElement;
-        context = canvas.getContext('2d') as HTML
-    }, []);
+    const canvasRef = useRef(null);
+    const getContext = (): CanvasRenderingContext2D => {
+        const canvas: any = canvasRef.current;
 
-    // componentDidMount() {
-    //     this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
-        
+        return canvas.getContext('2d');
+    };
 
-        // TODO: AddEventListenerではなく、stateなどを利用
-        // https://ja.reactjs.org/docs/handling-events.html
-        // this.canvas.addEventListener('mousedown', e => {
-        //     if (!this.isClearEnabled) {
-        //         this.beforeDraw(context);
-        //         this.isDrawing = true;
-        //     } else {
-        //         this.isClearing = true;
-        //     }
-        //     setX(e.offsetX)
-        //     this.y = e.offsetY
-        // });
-        
-        // this.canvas.addEventListener('mousemove', e => {
-        //     if (this.isDrawing) {
-        //         this.drawLine(context!, this.x, this.y, e.offsetX, e.offsetY);
-        //     } else if (this.isClearing) {
-        //         this.clearLine(context!, this.x, this.y, e.offsetX, e.offsetY);
-        //     }
-        //     this.x = e.offsetX;
-        //     this.y = e.offsetY;
-        // });
+    // // []を第二引数にすることで、初回のみの実行になる
+    // useEffect(() => {
+    //     context = getContext();
+    // }, []);
 
-        // this.canvas.addEventListener('mouseup', e => {
-        //     if (this.isDrawing === true) {
-        //         this.drawLine(context!, this.x, this.y, e.offsetX, e.offsetY);
-        //         this.isDrawing = false;
-        //     } else if (this.isClearing) {
-        //         this.clearLine(context!, this.x, this.y, e.offsetX, e.offsetY);
-        //         this.isClearing = false;
-        //     }
-        //     this.x = 0;
-        //     this.y = 0;
-        // });
+    // useEffect(() => {
+    //     // onMouseMove.bind(this)
+    //     // onMouseDown.bind(this)
+    // }, []);
 
-        // this.canvas.addEventListener('mouseleave', e => {
-        //     if (this.isDrawing === true) {
-        //         this.drawLine(context!, this.x, this.y, e.offsetX, e.offsetY);
-        //         this.isDrawing = false;
-        //     }
-        //     this.x = 0;
-        //     this.y = 0;
-        // })
-
-        // document.getElementById("clear")?.addEventListener('click', e => {
-        //     this.onClearClick();
-        // })
-
-        // document.getElementById("redo")?.addEventListener('click', e => {
-        //     this.redo(context);
-        // })
-
-        // document.getElementById("undo")?.addEventListener('click', e => {
-        //     this.undo(context);
-        // })
-    //}
-
-    function MouseMove(e: MouseEvent) {
+    function onMouseMove(e: MouseEvent<HTMLCanvasElement>) {
+        const context = getContext();
         if (isDrawing) {
-            drawLine(context!, x, y, e.offsetX, e.offsetY);
+            drawLine(context, x, y, e.clientX, e.clientY);
         } else if (isClearing) {
-            clearLine(context!, x, y, e.offsetX, e.offsetY);
+            clearLine(context, x, y, e.clientX, e.clientY);
         }
-        setX(e.offsetX);
-        setY(e.offsetY);
+        setX(e.clientX);
+        setY(e.clientY);
     }
  
-    const onMouseDown = (e: MouseEvent) => {
+    const onMouseDown = (e: MouseEvent<HTMLCanvasElement>) => {
         if (!isClearEnabled) {
             beforeDraw();
             setDrawing(true);
         } else {
             setClearing(true);
         }
-        setX(e.offsetX);
-        setY(e.offsetY);
+        setX(e.clientX);
+        setY(e.clientY);
     };
 
-    const MouseUp = (e: MouseEvent) => {
+    const onMouseUp = (e: MouseEvent<HTMLCanvasElement>) => {
+        const context = getContext();
       if (isDrawing) {
-        drawLine(context!, x, y, e.offsetX, e.offsetY);
+        drawLine(context, x, y, e.clientX, e.clientY);
         setDrawing(false);
       } else if (isClearing) {
-        clearLine(context!, x, y, e.offsetX, e.offsetY);
+        clearLine(context, x, y, e.clientX, e.clientY);
         setClearing(false);
       }
       setX(0);
       setY(0);
     }
 
-    const MouseLeave = (e: MouseEvent) => {
+    const onMouseLeave = (e: MouseEvent<HTMLCanvasElement>) => {
+        const context = getContext();
         if (isDrawing) {
-            drawLine(context!, x, y, e.offsetX, e.offsetY);
+            drawLine(context, x, y, e.clientX, e.clientY);
             setDrawing(false);
         }
         setX(0);
@@ -134,6 +80,8 @@ export default function Canvas() {
     }
 
     const beforeDraw = () => {
+        const canvas: any = canvasRef.current;
+        const context = getContext();
         // やり直し用スタックの中身を削除
         redoDataStack = [];
         // 元に戻す用の配列が最大保持数より大きくなっているかどうか
@@ -142,7 +90,7 @@ export default function Canvas() {
             undoDataStack.pop();
         }
         // 元に戻す配列の先頭にcontextのImageDataを保持する
-        undoDataStack.unshift(context.getImageData(0, 0, canvas!.width, canvas!.height) as never);
+        undoDataStack.unshift(context.getImageData(0, 0, canvas.width, canvas.height) as never);
     }
 
     const drawLine = (context: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number) => {
@@ -155,24 +103,11 @@ export default function Canvas() {
       context.closePath();
     }
 
-    // const beforeDraw = (context: CanvasRenderingContext2D) => {
-    //     canvas = document.getElementById('canvas') as HTMLCanvasElement;
-    //     // やり直し用スタックの中身を削除
-    //     this.redoDataStack = [];
-    //     // 元に戻す用の配列が最大保持数より大きくなっているかどうか
-    //     if (this.undoDataStack.length >= this.STACK_MAX_SIZE) {
-    //         // 条件に該当する場合末尾の要素を削除
-    //         this.undoDataStack.pop();
-    //     }
-    //     // 元に戻す配列の先頭にcontextのImageDataを保持する
-    //     this.undoDataStack.unshift(context.getImageData(0, 0, this.canvas.width, this.canvas.height) as never);
-    // }
-
     // 参考: https://qiita.com/ampersand/items/69c8d632ed9f60358418
     const redo = () => {
         canvas = document.getElementById('canvas') as HTMLCanvasElement;
         // やり直し用配列にスタックしているデータがなければ処理を終了する
-        if (redoDataStack.length <= 0 || !canvas) return;
+        if (redoDataStack.length <= 0 || !canvas || !context) return;
         // 元に戻す用の配列にやり直し操作をする前のCanvasの状態をスタックしておく
         undoDataStack.unshift(context.getImageData(0, 0, canvas.width, canvas.height) as never);
         // やり直す配列の先頭からイメージデータを取得して
@@ -183,7 +118,7 @@ export default function Canvas() {
 
     const undo = () => {
         // 戻す配列にスタックしているデータがなければ処理を終了する
-        if (undoDataStack.length <= 0 || !canvas) return;
+        if (undoDataStack.length <= 0 || !canvas || !context) return;
         // やり直し用の配列に元に戻す操作をする前のCanvasの状態をスタックしておく
         redoDataStack.unshift(context.getImageData(0, 0, canvas.width, canvas.height) as never);
         // 元に戻す配列の先頭からイメージデータを取得して
@@ -203,10 +138,13 @@ export default function Canvas() {
     return (
         <>
             <canvas id="canvas"
-                className="canvas"
+                ref={canvasRef}
                 width="200"
                 height="400"
-                onMouseMove={MouseMove}
+                onMouseDown={onMouseDown}
+                onMouseMove={onMouseMove}
+                onMouseUp={onMouseUp}
+                onMouseLeave={onMouseLeave}
                 >canvas</canvas>
             {/* <NormalButton title="clear" onClick={this.onClearClick}/> */}
                 <button onClick={onClearClick}>clear</button>
